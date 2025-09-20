@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多人掷骰子游戏</title>
+</head>
+<body>
+  <h1>🎲 多人掷骰子游戏</h1>
+
+  <!-- 钱包连接 -->
+  <button id="connectWallet">连接 MetaMask</button>
+  <p id="walletAddress"></p>
+
+  <hr/>
+
+  <!-- 创建房间 -->
+  <h2>创建房间</h2>
+  <input type="number" id="maxPlayers" value="1" min="1">
+  <button id="createRoomBtn">创建房间</button>
+  <p id="createdRoomId"></p>
+
+  <!-- 加入房间 -->
+  <h2>加入房间</h2>
+  <input type="text" id="joinRoomId" placeholder="房间号">
+  <button id="joinRoomBtn">加入房间</button>
+
+  <!-- 删除房间 -->
+  <h2>删除房间</h2>
+  <input type="text" id="deleteRoomId" placeholder="房间号">
+  <button id="deleteRoomBtn">删除房间</button>
+
+  <!-- 查询赢家 -->
+  <h2>查询赢家</h2>
+  <input type="text" id="checkRoomId" placeholder="房间号">
+  <button id="checkWinnerBtn">查看赢家</button>
+  <p id="winner"></p>
+
+  <!-- 引入 ethers.js UMD 版本 -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+
+  <script>
+  window.addEventListener("load", () => {
+    const CONTRACT_ADDRESS = "0x5Cf84Ad10D2ecb4BD0303BA1d3715a4A13BFeB3c"; // TODO: 替换成你的合约地址
+    const ABI = [
+      {
+        "inputs":[{"internalType":"uint256","name":"_maxPlayers","type":"uint256"}],
+        "name":"createRoom",
+        "outputs":[{"internalType":"uint256","name":"","type":"uint256"}],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"roomId","type":"uint256"}],
+        "name":"joinRoom",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      ,
+      {
+        "inputs":[{"internalType":"uint256","name":"roomId","type":"uint256"}],
+        "name":"deleteRoom",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"roomId","type":"uint256"}],
+        "name":"getWinner",
+        "outputs":[{"internalType":"address","name":"","type":"address"}],
+        "stateMutability":"view",
+        "type":"function"
+      }
+    ];
+
+    let provider, signer, contract;
+
+    // 手动连接钱包
+    document.getElementById("connectWallet").onclick = async () => {
+      if (!window.ethereum) {
+        alert("MetaMask 未安装或未启用");
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        const account = accounts[0];
+        document.getElementById("walletAddress").innerText = "已连接: " + account;
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        console.log("钱包连接成功:", account);
+
+        const network = await provider.getNetwork();
+        console.log("当前网络:", network);
+      } catch(err) {
+        console.error("连接钱包失败:", err);
+        alert("连接钱包失败");
+      }
+    };
+
+    // 创建房间
+    document.getElementById("createRoomBtn").onclick = async () => {
+      if (!contract) { 
+        alert("请先连接钱包"); 
+        return; 
+      }
+
+      const maxPlayers = parseInt(document.getElementById("maxPlayers").value);
+      if (isNaN(maxPlayers) || maxPlayers < 1) {
+        alert("请输入合法的玩家人数（至少 1 人）");
+        return;
+      }
+
+      try {
+
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+      // 调用合约 createRoom
+      const tx = await contract.createRoom(maxPlayers);
+      /*const receipt = await tx.wait();
+
+      const event = receipt.logs
+      .map(log => {
+        try {
+        return contract.interface.parseLog(log);
+      } catch(e) {
+        return null;
+      }
+      })
+      .find(parsed => parsed && parsed.name === "RoomCreated");
+
+      if (event) {
+        const roomId = event.args.roomId;
+        alert(`🎉 创建房间成功！房间号：${roomId}`);
+      } else {
+        alert("创建房间成功，但未捕获到 RoomCreated 事件");
+      }*/
+
+      const receipt = await tx.wait(); // 等待交易上链
+      
+      const roomCreatedEvent = receipt.logs
+      .map(log => {
+      try {
+        return contract.interface.parseLog(log);
+      } catch (e) {
+        return null;
+      }
+      })
+      .find(e => e && e.name === "RoomCreated");
+
+      if (roomCreatedEvent) {
+        const roomId = roomCreatedEvent.args.roomId;
+        alert(`🎉 创建房间成功！房间号：${roomId}`);
+      } else {
+        alert("创建房间成功，但未捕获到 RoomCreated 事件");
+      }
+      /*
+      // 用 callStatic 获取返回值（房间号）
+      const roomId = await contract.callStatic.createRoom(maxPlayers);
+      alert(`🎉 创建房间成功！房间号：${roomId}`);
+      */
+
+      } catch(err) {
+        console.error(err);
+        alert("创建房间失败：" + (err?.message || err));
+      }
+    };
+
+    // 加入房间
+    document.getElementById("joinRoomBtn").onclick = async () => {
+      if (!contract) { alert("请先连接钱包"); return; }
+      const roomId = document.getElementById("joinRoomId").value;
+      try {
+        const tx = await contract.joinRoom(roomId);
+        await tx.wait();
+        alert("加入房间成功，等待人数满自动开始游戏");
+      } catch(err) {
+        console.error(err);
+        alert("加入房间失败");
+      }
+    };
+
+    // 删除房间
+    document.getElementById("deleteRoomBtn").onclick = async () => {
+      if (!contract) { alert("请先连接钱包"); return; }
+      const roomId = document.getElementById("deleteRoomId").value;
+      try {
+        const tx = await contract.deleteRoom(roomId);
+        await tx.wait();
+        alert("删除房间成功");
+      } catch(err) {
+        console.error(err);
+        alert("删除房间失败");
+      }
+    };
+
+    // 查询赢家
+    document.getElementById("checkWinnerBtn").onclick = async () => {
+      if (!contract) { alert("请先连接钱包"); return; }
+      const roomId = document.getElementById("checkRoomId").value;
+      try {
+        const winnerAddr = await contract.getWinner(roomId);
+        document.getElementById("winner").innerText = winnerAddr === "0x0000000000000000000000000000000000000000" 
+          ? roomId + "房间游戏还未结束或无人获胜：" + winnerAddr
+          : "🏆 获胜者：" + winnerAddr;
+      } catch(err) {
+        console.error(err);
+        alert("查询失败");
+      }
+    };
+  });
+  </script>
+</body>
+</html>
+
