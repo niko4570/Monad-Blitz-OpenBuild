@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 contract DiceGame  {
-    
+
     struct Room {
         uint256 roomId;
         uint256 maxPlayers;
@@ -83,7 +83,7 @@ contract DiceGame  {
     function deleteRoom(uint256 roomId) external {
         Room storage room = rooms[roomId];
         require(!room.started, "Cannot delete a started room");
-        
+
         delete rooms[roomId];
 
         uint256[] storage builderRooms = roomsByBuilder[msg.sender];
@@ -108,107 +108,7 @@ contract DiceGame  {
         return rooms[roomId].builder;
     }
 
-    // View functions
-    function getRoomInfo(uint256 roomId) external view roomExists(roomId) returns (
-        uint256 id,
-        uint256 maxPlayers,
-        address[] memory players,
-        RoomStatus status,
-        address winner,
-        uint256[] memory diceResults,
-        address builder,
-        uint256 createdAt,
-        uint256 finishedAt
-    ) {
-        Room storage room = rooms[roomId];
-        return (
-            room.roomId,
-            room.maxPlayers,
-            room.players,
-            room.status,
-            room.winner,
-            room.diceResults,
-            room.builder,
-            room.createdAt,
-            room.finishedAt
-        );
-    }
-
-    function getActiveRooms() external view returns (uint256[] memory) {
-        uint256[] memory activeRooms = new uint256[](nextRoomId);
-        uint256 count = 0;
-
-        for (uint256 i = 0; i < nextRoomId; i++) {
-            if (rooms[i].status == RoomStatus.Active) {
-                activeRooms[count] = i;
-                count++;
-            }
-        }
-
-        uint256[] memory result = new uint256[](count);
-        for (uint256 i = 0; i < count; i++) {
-            result[i] = activeRooms[i];
-        }
-
-        return result;
-    }
-
-    function getGameResults(uint256 roomId) external view roomExists(roomId) returns (GameResult[] memory) {
-        return gameResults[roomId];
-    }
-
-    function getPlayerStats(address player) external view returns (uint256 wins, uint256 gamesPlayed) {
-        wins = playerWins[player];
-        gamesPlayed = 0;
-
-        for (uint256 i = 0; i < nextRoomId; i++) {
-            if (rooms[i].status == RoomStatus.Finished && playerJoined[player][i]) {
-                gamesPlayed++;
-            }
-        }
-    }
-
-    function getPlayers(uint256 roomId) external view roomExists(roomId) returns (address[] memory) {
-        return rooms[roomId].players;
-    }
-
-    function getRoomsByBuilder(address builder) external view returns (uint256[] memory) {
-        return roomsByBuilder[builder];
-    }
-
-    function getRoomBuilder(uint256 roomId) external view roomExists(roomId) returns (address) {
-        return rooms[roomId].builder;
-    }
-
-    function getRoomStatus(uint256 roomId) external view roomExists(roomId) returns (RoomStatus) {
-        return rooms[roomId].status;
-    }
-
-    function getOperator() external view returns (address) {
+    function getOperator() internal view returns (address) {
         return i_operator;
-    }
-
-    function getTotalStats() external view returns (uint256 totalRoomsCreated, uint256 totalGames, uint256 activeRoomsCount) {
-        totalRoomsCreated = nextRoomId;
-        totalGames = totalGamesPlayed;
-
-        for (uint256 i = 0; i < nextRoomId; i++) {
-            if (rooms[i].status == RoomStatus.Active) {
-                activeRoomsCount++;
-            }
-        }
-    }
-
-    function emergencyPause() external onlyOwner {
-        // Implementation for emergency pause if needed
-    }
-
-    function updateRandomSeed() external onlyOwner {
-        _randomSeed = uint256(keccak256(abi.encodePacked(
-            block.timestamp,
-            block.difficulty,
-            msg.sender,
-            gasleft()
-        )));
     }
 }
