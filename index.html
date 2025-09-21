@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 卡通骰子大冒險 | DiceGame V2.0</title>
+    <meta name="description" content="史上最強的 Web3 骰子遊戲！支持多人對戰、安全隨機數、豐富動畫效果。部署在 Monad Testnet 上。">
+    <meta name="keywords" content="Web3, 骰子遊戲, Monad, 智能合約, DApp, 區塊鏈遊戲">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="🎲 卡通骰子大冒險 | DiceGame V2.0">
+    <meta property="og:description" content="史上最強的 Web3 骰子遊戲！多人對戰、安全隨機數、豐富動畫效果">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://your-domain.vercel.app/preview.png">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="🎲 卡通骰子大冒險 | DiceGame V2.0">
+    <meta name="twitter:description" content="史上最強的 Web3 骰子遊戲！多人對戰、安全隨機數、豐富動畫效果">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: bounceIn 1s ease-out;
+        }
+
+        .title {
+            font-size: 4em;
+            color: #fff;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.4em;
+            color: #f8f9fa;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 20px 10px;
+            animation: pulse 2s infinite;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .game-versions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .version-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .version-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .version-card:hover::before {
+            left: 100%;
+        }
+
+        .version-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        }
+
+        .version-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .version-emoji {
+            font-size: 1.2em;
+            animation: bounce 2s infinite;
+        }
+
+        .version-description {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .feature-list li {
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .play-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+
+        .play-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .play-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-basic { background: linear-gradient(45deg, #4ecdc4, #44a08d); }
+        .btn-enhanced { background: linear-gradient(45deg, #667eea, #764ba2); }
+        .btn-ultimate { background: linear-gradient(45deg, #ff6b6b, #feca57); }
+
+        .contract-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .contract-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .contract-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .tools-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+
+        .tools-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .tool-btn {
+            background: linear-gradient(45deg, #feca57, #ff9ff3);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+
+        .tool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(254, 202, 87, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            color: #f8f9fa;
+            opacity: 0.8;
+            padding: 20px;
+        }
+
+        .footer a {
+            color: #feca57;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* 動畫 */
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5em;
+            }
+
+            .game-versions {
+                grid-template-columns: 1fr;
+            }
+
+            .contract-details {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 背景裝飾 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-dice {
+            position: absolute;
+            font-size: 2em;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .dice-1 { top: 10%; left: 10%; animation-delay: 0s; }
+        .dice-2 { top: 20%; right: 15%; animation-delay: 1s; }
+        .dice-3 { bottom: 30%; left: 20%; animation-delay: 2s; }
+        .dice-4 { bottom: 20%; right: 10%; animation-delay: 3s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景裝飾 -->
+    <div class="bg-decoration">
+        <div class="floating-dice dice-1">🎲</div>
+        <div class="floating-dice dice-2">🎯</div>
+        <div class="floating-dice dice-3">🏆</div>
+        <div class="floating-dice dice-4">✨</div>
+    </div>
+
+    <div class="container">
+        <!-- 標題區域 -->
+        <div class="header">
+            <h1 class="title">🎲 卡通骰子大冒險</h1>
+            <p class="subtitle">
+                史上最強的 Web3 骰子遊戲！多人對戰、安全隨機數、豐富動畫效果。
+                <br>部署在 Monad Testnet 上，完全去中心化的遊戲體驗。
+            </p>
+            <div class="version-badge">V2.0 Enhanced</div>
+        </div>
+
+        <!-- 合約信息 -->
+        <div class="contract-info">
+            <h2 class="contract-title">📡 智能合約信息</h2>
+            <div class="contract-details">
+                <div class="detail-item">
+                    <div class="detail-label">合約地址</div>
+                    <div class="detail-value">0xAa3e0954f3b665e84c3baE5e159A27FF70edf955</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">網絡</div>
+                    <div class="detail-value">Monad Testnet (Chain ID: 41)</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">合約版本</div>
+                    <div class="detail-value">DiceGameV2 (Enhanced)</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">區塊瀏覽器</div>
+                    <div class="detail-value">
+                        <a href="https://testnet-explorer.monad.xyz/address/0xAa3e0954f3b665e84c3baE5e159A27FF70edf955" target="_blank" style="color: #667eea;">
+                            查看合約 →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 遊戲版本選擇 -->
+        <div class="game-versions">
+            <!-- 基礎版本 -->
+            <div class="version-card">
+                <h3 class="version-title">
+                    <span class="version-emoji">🎮</span>
+                    基礎版本
+                </h3>
+                <p class="version-description">
+                    簡潔優雅的骰子遊戲體驗，包含所有核心功能。
+                </p>
+                <ul class="feature-list">
+                    <li>✅ 多人房間創建和加入</li>
+                    <li>✅ 安全隨機數骰子遊戲</li>
+                    <li>✅ 卡通風格界面</li>
+                    <li>✅ MetaMask 錢包集成</li>
+                    <li>✅ 即時結果顯示</li>
+                </ul>
+                <a href="dice-game-demo.html" class="play-btn btn-basic">
+                    🎯 開始遊戲
+                </a>
+            </div>
+
+            <!-- 增強版本 -->
+            <div class="version-card">
+                <h3 class="version-title">
+                    <span class="version-emoji">🚀</span>
+                    增強版本
+                </h3>
+                <p class="version-description">
+                    功能豐富的完整遊戲體驗，包含房間大廳和統計系統。
+                </p>
+                <ul class="feature-list">
+                    <li>✅ 實時房間大廳</li>
+                    <li>✅ 個人和全局統計</li>
+                    <li>✅ 遊戲歷史記錄</li>
+                    <li>✅ 自動刷新功能</li>
+                    <li>✅ 增強動畫效果</li>
+                </ul>
+                <a href="dice-game-v2-demo.html" class="play-btn btn-enhanced">
+                    🏠 進入大廳
+                </a>
+            </div>
+
+            <!-- 終極版本 -->
+            <div class="version-card">
+                <h3 class="version-title">
+                    <span class="version-emoji">✨</span>
+                    終極版本
+                </h3>
+                <p class="version-description">
+                    史上最強體驗！包含音效、粒子效果和高級交互。
+                </p>
+                <ul class="feature-list">
+                    <li>✅ Web Audio API 音效系統</li>
+                    <li>✅ 粒子效果和慶祝動畫</li>
+                    <li>✅ 響應式設計</li>
+                    <li>✅ 暗色模式支持</li>
+                    <li>✅ 極致視覺體驗</li>
+                </ul>
+                <a href="dice-game-v2-enhanced.html" class="play-btn btn-ultimate">
+                    ⚡ 極致體驗
+                </a>
+            </div>
+        </div>
+
+        <!-- 工具區域 -->
+        <div class="tools-section">
+            <h2 class="tools-title">🔧 開發者工具</h2>
+            <a href="contract-test.html" class="tool-btn">
+                🧪 合約連接測試
+            </a>
+            <a href="https://github.com/niko4570/Monad-Blitz-OpenBuild" target="_blank" class="tool-btn">
+                📚 GitHub 源碼
+            </a>
+            <a href="README-DiceGameV2.md" target="_blank" class="tool-btn">
+                📖 技術文檔
+            </a>
+        </div>
+
+        <!-- 頁腳 -->
+        <div class="footer">
+            <p>
+                🎲 Made with ❤️ for the Web3 community |
+                Powered by <a href="https://monad.xyz/" target="_blank">Monad</a> |
+                Built with <a href="https://claude.ai/code" target="_blank">Claude Code</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                ⚠️ 這是測試網版本，請使用測試代幣進行遊戲
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 簡單的頁面載入動畫
+        window.addEventListener('load', () => {
+            console.log('🎲 DiceGame V2.0 載入完成！');
+
+            // 添加點擊統計（可選）
+            document.querySelectorAll('.play-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const version = e.target.textContent;
+                    console.log(`用戶選擇了: ${version}`);
+                });
+            });
+        });
+
+        // 添加一些互動效果
+        document.querySelectorAll('.version-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.zIndex = '10';
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.zIndex = '1';
+            });
+        });
+    </script>
+</body>
+</html>

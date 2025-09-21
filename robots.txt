@@ -1,0 +1,34 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://dicegame-v2.vercel.app/sitemap.xml
+
+# Main pages
+Allow: /
+Allow: /basic
+Allow: /enhanced
+Allow: /ultimate
+Allow: /test
+
+# Static files
+Allow: *.html
+Allow: *.js
+Allow: *.css
+Allow: *.png
+Allow: *.jpg
+Allow: *.gif
+Allow: *.svg
+
+# Block development files
+Disallow: /src/
+Disallow: /test/
+Disallow: /script/
+Disallow: /lib/
+Disallow: /out/
+Disallow: /cache/
+Disallow: /.git/
+Disallow: /*.log
+
+# Crawl delay (be gentle)
+Crawl-delay: 1

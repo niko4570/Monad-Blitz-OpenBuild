@@ -1,0 +1,62 @@
+{
+  "name": "dicegame-v2-dapp",
+  "version": "2.0.0",
+  "description": "🎲 史上最強的 Web3 骰子遊戲！多人對戰、安全隨機數、豐富動畫效果。部署在 Monad Testnet 上。",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python3 -m http.server 3000",
+    "build": "echo 'Static site - no build needed'",
+    "start": "python3 -m http.server 3000",
+    "preview": "python3 -m http.server 4173"
+  },
+  "keywords": [
+    "web3",
+    "dapp",
+    "dice-game",
+    "blockchain",
+    "monad",
+    "smart-contract",
+    "ethereum",
+    "decentralized",
+    "game",
+    "nft"
+  ],
+  "author": {
+    "name": "niko",
+    "url": "https://github.com/niko4570"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/niko4570/Monad-Blitz-OpenBuild.git"
+  },
+  "homepage": "https://dicegame-v2.vercel.app",
+  "bugs": {
+    "url": "https://github.com/niko4570/Monad-Blitz-OpenBuild/issues"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "dependencies": {},
+  "devDependencies": {},
+  "files": [
+    "index.html",
+    "dice-game-*.html",
+    "contract-*.html",
+    "contract-config.js",
+    "README*.md",
+    "DEPLOYMENT_GUIDE.md"
+  ],
+  "vercel": {
+    "outputDirectory": ".",
+    "framework": null,
+    "installCommand": "echo 'No install needed'",
+    "buildCommand": "echo 'No build needed'",
+    "devCommand": "python3 -m http.server 3000"
+  }
+}
