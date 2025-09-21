@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔗 DiceGameV2 合約連接測試</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+        .test-item {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .test-result {
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .network-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .address {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🔗 DiceGameV2 合約連接測試</h1>
+
+        <div class="network-info">
+            <h3>📡 網絡信息</h3>
+            <p><strong>網絡:</strong> Monad Testnet</p>
+            <p><strong>Chain ID:</strong> 41</p>
+            <p><strong>RPC:</strong> https://testnet-rpc.monad.xyz</p>
+            <p><strong>合約地址:</strong> <span class="address">0xAa3e0954f3b665e84c3baE5e159A27FF70edf955</span></p>
+        </div>
+
+        <div id="connectionStatus" class="status info">
+            🔄 準備連接...
+        </div>
+
+        <button id="connectWallet">🦊 連接 MetaMask</button>
+        <button id="runTests" disabled>🧪 運行測試</button>
+
+        <div id="walletInfo" style="display: none;">
+            <h3>👛 錢包信息</h3>
+            <p><strong>地址:</strong> <span id="walletAddress" class="address"></span></p>
+            <p><strong>網絡:</strong> <span id="networkName"></span></p>
+            <p><strong>Chain ID:</strong> <span id="chainId"></span></p>
+        </div>
+
+        <div id="testResults">
+            <!-- 測試結果將在這裡顯示 -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script>
+    <script>
+        const CONTRACT_ADDRESS = "0xAa3e0954f3b665e84c3baE5e159A27FF70edf955";
+        const MONAD_TESTNET_CHAIN_ID = 41;
+
+        // 簡化的 ABI，只包含測試需要的函數
+        const ABI = [
+            {
+                "inputs": [],
+                "name": "nextRoomId",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getTotalStats",
+                "outputs": [
+                    {"internalType": "uint256", "name": "totalRoomsCreated", "type": "uint256"},
+                    {"internalType": "uint256", "name": "totalGames", "type": "uint256"},
+                    {"internalType": "uint256", "name": "activeRoomsCount", "type": "uint256"}
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getActiveRooms",
+                "outputs": [{"internalType": "uint256[]", "name": "", "type": "uint256[]"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        let provider, signer, contract, userAddress;
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+
+        function addTestResult(title, result, success = true) {
+            const testResults = document.getElementById('testResults');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-item';
+            testDiv.innerHTML = `
+                <div class="test-title">${success ? '✅' : '❌'} ${title}</div>
+                <div class="test-result">${result}</div>
+            `;
+            testResults.appendChild(testDiv);
+        }
+
+        document.getElementById('connectWallet').onclick = async () => {
+            try {
+                updateStatus('🔄 正在連接 MetaMask...', 'info');
+
+                if (!window.ethereum) {
+                    throw new Error('請安裝 MetaMask 錢包');
+                }
+
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+                userAddress = accounts[0];
+
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+
+                // 檢查網絡
+                const network = await provider.getNetwork();
+                const chainId = Number(network.chainId);
+
+                // 顯示錢包信息
+                document.getElementById('walletAddress').textContent = userAddress;
+                document.getElementById('networkName').textContent = network.name || 'Unknown';
+                document.getElementById('chainId').textContent = chainId;
+                document.getElementById('walletInfo').style.display = 'block';
+
+                if (chainId !== MONAD_TESTNET_CHAIN_ID) {
+                    updateStatus(
+                        `⚠️ 請切換到 Monad Testnet (Chain ID: ${MONAD_TESTNET_CHAIN_ID})。當前: ${chainId}`,
+                        'error'
+                    );
+
+                    // 嘗試切換網絡
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: `0x${MONAD_TESTNET_CHAIN_ID.toString(16)}` }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            // 網絡不存在，添加網絡
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: `0x${MONAD_TESTNET_CHAIN_ID.toString(16)}`,
+                                    chainName: 'Monad Testnet',
+                                    rpcUrls: ['https://testnet-rpc.monad.xyz'],
+                                    nativeCurrency: {
+                                        name: 'MON',
+                                        symbol: 'MON',
+                                        decimals: 18
+                                    },
+                                    blockExplorerUrls: ['https://testnet-explorer.monad.xyz']
+                                }]
+                            });
+                        }
+                    }
+                    return;
+                }
+
+                // 創建合約實例
+                contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
+
+                updateStatus('✅ 錢包連接成功！可以開始測試了。', 'success');
+                document.getElementById('runTests').disabled = false;
+
+            } catch (error) {
+                console.error('連接錢包失敗:', error);
+                updateStatus(`❌ 連接失敗: ${error.message}`, 'error');
+            }
+        };
+
+        document.getElementById('runTests').onclick = async () => {
+            if (!contract) {
+                updateStatus('❌ 請先連接錢包', 'error');
+                return;
+            }
+
+            document.getElementById('testResults').innerHTML = '';
+            updateStatus('🧪 正在運行合約測試...', 'info');
+
+            const tests = [
+                {
+                    name: '檢查合約所有者',
+                    test: async () => {
+                        const owner = await contract.owner();
+                        return `合約所有者: ${owner}`;
+                    }
+                },
+                {
+                    name: '獲取下一個房間 ID',
+                    test: async () => {
+                        const nextId = await contract.nextRoomId();
+                        return `下一個房間 ID: ${nextId.toString()}`;
+                    }
+                },
+                {
+                    name: '獲取總體統計',
+                    test: async () => {
+                        const [totalRooms, totalGames, activeRooms] = await contract.getTotalStats();
+                        return `總房間數: ${totalRooms.toString()}, 總遊戲數: ${totalGames.toString()}, 活躍房間: ${activeRooms.toString()}`;
+                    }
+                },
+                {
+                    name: '獲取活躍房間列表',
+                    test: async () => {
+                        const activeRooms = await contract.getActiveRooms();
+                        return `活躍房間: [${activeRooms.map(id => id.toString()).join(', ')}]`;
+                    }
+                },
+                {
+                    name: '檢查合約代碼',
+                    test: async () => {
+                        const code = await provider.getCode(CONTRACT_ADDRESS);
+                        return code !== '0x' ?
+                            `合約已部署，代碼長度: ${code.length} 字符` :
+                            '⚠️ 合約未部署或無代碼';
+                    }
+                }
+            ];
+
+            let successCount = 0;
+
+            for (const testCase of tests) {
+                try {
+                    const result = await testCase.test();
+                    addTestResult(testCase.name, result, true);
+                    successCount++;
+                } catch (error) {
+                    addTestResult(testCase.name, `錯誤: ${error.message}`, false);
+                }
+            }
+
+            if (successCount === tests.length) {
+                updateStatus(`🎉 所有測試通過！(${successCount}/${tests.length}) 合約連接正常！`, 'success');
+            } else {
+                updateStatus(`⚠️ 部分測試失敗 (${successCount}/${tests.length})`, 'error');
+            }
+        };
+
+        // 頁面加載時顯示基本信息
+        window.addEventListener('load', () => {
+            updateStatus('👋 歡迎！請連接 MetaMask 開始測試', 'info');
+        });
+    </script>
+</body>
+</html>

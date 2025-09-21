@@ -427,9 +427,9 @@ contract DiceGameV2Test is Test {
             assertGt(diceCount[i], 0, "Dice value should appear at least once");
         }
 
-        console.log("Dice distribution over", totalGames, "games:");
+        console.log(string(abi.encodePacked("Dice distribution over ", vm.toString(totalGames), " games:")));
         for (uint256 i = 1; i <= 6; i++) {
-            console.log("Dice", i, ":", diceCount[i], "times");
+            console.log(string(abi.encodePacked("Dice ", vm.toString(i), ": ", vm.toString(diceCount[i]), " times")));
         }
     }
 
